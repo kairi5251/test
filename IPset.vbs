@@ -33,7 +33,7 @@ Set d = CreateObject("htmlfile")
 d.parentWindow.setTimeout GetRef("SetWindow"),100
 
 '##### メニュー画面表示
-menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化" & vbLf & vbLf & "4.県インターネットへ切り替え" & vbLf & vbLf & "5.市町村インターネットへ切り替え",Title,2)
+menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化",Title,2)
 
 '##### ハンドル取得
 Sub SetWindow()
@@ -68,7 +68,7 @@ Do while loopflag = 1
     '##### 値の入力なし
     If Len(menu) = 0 Then
         MsgBox "値が入力されていません。"
-        menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化" & vbLf & vbLf & "4.県インターネットへ切り替え" & vbLf & vbLf & "5.市町村インターネットへ切り替え",Title,2)
+        menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化",Title,2)
         If IsEmpty(menu) Then
             MsgBox "キャンセルしました。"
             WScript.Quit
@@ -77,7 +77,7 @@ Do while loopflag = 1
     '##### 数値以外の入力
     Else If Not IsNumeric(menu) Then
         MsgBox "番号を入力してください。"
-        menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化" & vbLf & vbLf & "4.県インターネットへ切り替え" & vbLf & vbLf & "5.市町村インターネットへ切り替え",Title,2)
+        menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化",Title,2)
         If IsEmpty(menu) Then
             MsgBox "キャンセルしました。"
             WScript.Quit
@@ -86,7 +86,7 @@ Do while loopflag = 1
     '##### 数値（範囲外）の入力
     Else If CDbl(menu) > 5 Or CDbl(menu) < 1 Then
         MsgBox "表示された範囲内の番号を入力してください。"
-        menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化" & vbLf & vbLf & "4.県インターネットへ切り替え" & vbLf & vbLf & "5.市町村インターネットへ切り替え",Title,2)
+        menu = InputBox("メニューを選択してください。" & vbCrLf & vbCrLf & "1.IPアドレス確認" & vbCrLf & vbCrLf & "2.IPアドレス変更" & vbCrLf & vbLf & "3.DHCP有効化",Title,2)
         If IsEmpty(menu) Then
                 MsgBox "キャンセルしました。"
                 WScript.Quit
@@ -139,15 +139,6 @@ For Each cl In qu
     OldIP = cl.IPAddress(0)
     OldMsk = cl.IPSubnet(0)
 Next
-
-'##### 県/市町村インターネットの設定
-Dim GW1,GW2,GDNS
-' 県インターネット
-GW1 = "10.255.8.254"
-' 市町村インターネット
-GW2 = "10.255.8.253"
-' Google DNS
-GDNS = "8.8.8.8"
 
 '##### メニュー別処理
 Select Case menu
@@ -351,54 +342,6 @@ Select Case menu
         WSHShell.Run "cmd.exe /c netsh interface ip set dns """ & iNameAry(nicSelect) &""" dhcp"
         WSHShell.Run "cmd.exe /c netsh interface ip set address " & iNameAry(nicSelect) & " dhcp"
         WSHShell.Run "cmd.exe /c netsh interface ip set dns " & iNameAry(nicSelect) & " dhcp"
-        '##### IPアドレス表示
-        Set d=CreateObject("htmlfile")
-        d.parentWindow.setTimeout GetRef("proc"),100
-        Sub proc
-        Set wShell = CreateObject("WScript.Shell")
-        wShell.PopUp "処理中です。しばらくお待ちください。",4
-        WScript.Timeout=100
-
-        End Sub
-
-        WScript.Sleep 4000
-        Set WSHShell = WScript.CreateObject("WScript.Shell")
-        Set oExec = WshShell.Exec("netsh interface ipv4 show config")
-        WScript.echo oExec.StdOut.ReadAll
-
-    '##### 県インターネットへ切り替え
-    Case    4
-        '##### 設定変更
-        
-        Set WSHShell = WScript.CreateObject("WScript.Shell")
-        WSHShell.Run "cmd.exe /c netsh interface ip set address " & "イーサネット" & " static " & OldIP & " " & OldMsk & " " & GW1
-        WSHShell.Run "cmd.exe /c netsh interface ip set address """ & "イーサネット" & """ static "& OldIP & " " & OldMsk & " " & GW1
-        WSHShell.Run "cmd.exe /c netsh interface ip set dns " & "イーサネット" & " static " & GDNS , 0, True
-
-        '##### IPアドレス表示
-        Set d=CreateObject("htmlfile")
-        d.parentWindow.setTimeout GetRef("proc"),100
-        Sub proc
-        Set wShell = CreateObject("WScript.Shell")
-        wShell.PopUp "処理中です。しばらくお待ちください。",4
-        WScript.Timeout=100
-
-        End Sub
-
-        WScript.Sleep 4000
-        Set WSHShell = WScript.CreateObject("WScript.Shell")
-        Set oExec = WshShell.Exec("netsh interface ipv4 show config")
-        WScript.echo oExec.StdOut.ReadAll
-
-    '##### 市町村インターネットへ切り替え
-    Case    5
-    
-        '##### 設定変更
-        Set WSHShell = WScript.CreateObject("WScript.Shell")
-        WSHShell.Run "cmd.exe /c netsh interface ip set address " & "イーサネット" & " static " & OldIP & " " & OldMsk & " " & GW2
-        WSHShell.Run "cmd.exe /c netsh interface ip set address """ & "イーサネット" & """ static "& OldIP & " " & OldMsk & " " & GW2
-        WSHShell.Run "cmd.exe /c netsh interface ip set dns " & "イーサネット" & " static " & GDNS , 0, True
-
         '##### IPアドレス表示
         Set d=CreateObject("htmlfile")
         d.parentWindow.setTimeout GetRef("proc"),100
