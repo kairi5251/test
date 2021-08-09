@@ -1,0 +1,84 @@
+■参考サイト
+win10HomeバージョンでHyper-v有効化
+https://zeropasoakita.livedoor.blog/archives/37449396.html
+
+docker環境構築
+https://qiita.com/fkooo/items/d2fddef9091b906675ca
+
+dockerコマンドでよく使うやつ
+https://qiita.com/Esfahan/items/52141a2ad741933d7d4c
+
+Windows10にDocker入れて、jupyterlabを起動
+https://qiita.com/tajima440/items/a00b428f72e32542be8c
+
+■全体の流れ
+1.win10で仮想化に必要な機能の有効化
+2.「docker desktop」インストール、起動
+3.Powershellからdockerコマンドで仮想コンテナ起動
+
+■手順
+・docker desktopインストール後、起動時にwsl2パッケージの警告が出てエラー
+　⇒ポップアップに記載のURLにアクセスし、パッケージダウンロードにて解決
+
+----- 以降は基本的にpowershellからdockerコマンドにて操作 -----
+
+・Dockerfile作成
+※Dockerfileのファイル名は先頭大文字D、拡張子なしとすること！
+---
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y sudo wget vim curl gawk make gcc
+
+RUN wget https://repo.continuum.io/archive/Anaconda3-2019.03-Linux-x86_64.sh && \
+    sh Anaconda3-2019.03-Linux-x86_64.sh -b  && \
+    rm -f Anaconda3-2019.03-Linux-x86_64.sh && \
+    sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -  && \
+    sudo apt-get install -y nodejs
+
+ENV PATH $PATH:/root/anaconda3/bin
+
+RUN pip install --upgrade pip
+RUN pip install pandas_datareader
+RUN pip install mplfinance
+
+RUN wget --quiet http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz -O ta-lib-0.4.0-src.tar.gz && \
+    tar xvf ta-lib-0.4.0-src.tar.gz && \
+    cd ta-lib/ && \
+    ./configure --prefix=/usr && \
+    make && \
+    sudo make install && \
+    cd .. && \
+    pip install TA-Lib && \
+    rm -R ta-lib ta-lib-0.4.0-src.tar.gz
+
+RUN mkdir /workspace
+
+CMD ["jupyter-lab", "--ip=0.0.0.0","--port=8888" ,"--no-browser", "--allow-root", "--LabApp.token=''"]
+---
+
+・Dockerfileを配置したディレクトリに移動し以下のコマンドにてビルド
+cd .\Desktop\mydocker\
+docker build -t jlab;latest ./
+
+・イメージID確認
+docker ps -a
+
+・マウントしてコンテナ作成、実行
+コマンド説明：docker run -v {ホスト側ディレクトリ}:{コンテナ側ディレクトリ} -itd --name {コンテナ名} {イメージ名}
+docker run -p 8888:8888 -v C:\Users\ユーザー名\Desktop\mydocker\workspace:/data/workspace --name jlab xxxxxxxxxxxx
+
+・ブラウザから以下URLにアクセス
+http://127.0.0.1:8888/
+
+・tensorflowインストール
+※pipでインストールすると依存関係のエラーとなるため、condaコマンドでインストールする
+# conda install tensorflow
+# python
+>>> import tensorflow as tf
+>>> hello = tf.constant('Hello, TensorFlow!')
+>>> sess = tf.Session()
+>>> print(sess.run(hello))
+b'Hello, TensorFlow!'
+
+もし、pipでインストールした場合は以下コマンドでアンインストール後、再度condaコマンドでインストールする
+# pip uninstall tensorflow
